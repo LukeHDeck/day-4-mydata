@@ -228,9 +228,9 @@
                             // Slight color variation for visual interest
                             'model-color': [
                                 'hsla',
-                                ['random', 80, 120, ['id']],
+                                ['random', 80, 120, ['get', 'index']],
                                 50,
-                                ['random', 40, 60, ['id']],
+                                ['random', 40, 60, ['get', 'index']],
                                 1
                             ],
                             'model-color-mix-intensity': 0.15,
@@ -244,7 +244,7 @@
                             ],
                             // Random rotation for natural appearance
                             'model-rotation': [
-                                0, 0, ['random', 0, 360, ['id']]
+                                0, 0, ['random', 0, 360, ['get', 'index']]
                             ],
                             // Scale based on tree type and user controls
                             'model-scale': createScaleExpression(),
