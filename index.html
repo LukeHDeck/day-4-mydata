@@ -59,16 +59,18 @@
             letter-spacing: 0.5px;
         }
 
-        .control-group input[type="range"] {
+        .control-group input[type="number"] {
             width: 100%;
-            margin-bottom: 5px;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            box-sizing: border-box;
         }
 
-        .control-group .value-display {
-            text-align: right;
-            font-size: 12px;
-            color: #7f8c8d;
-            font-weight: 500;
+        .control-group input[type="number"]:focus {
+            outline: none;
+            border-color: #3498db;
         }
 
         @media only screen and (max-width: 640px) {
@@ -88,23 +90,19 @@
         <h3>Tree Scale Controls</h3>
         <div class="control-group">
             <label>Extra Large Trees</label>
-            <input type="range" id="scale-extra-large" min="0.5" max="2.0" step="0.1" value="1.0">
-            <div class="value-display">Scale: <span id="value-extra-large">1.0</span></div>
+            <input type="number" id="scale-extra-large" min="0.1" max="100" step="0.1" value="1.0">
         </div>
         <div class="control-group">
             <label>Large Trees</label>
-            <input type="range" id="scale-large" min="0.5" max="2.0" step="0.1" value="1.0">
-            <div class="value-display">Scale: <span id="value-large">1.0</span></div>
+            <input type="number" id="scale-large" min="0.1" max="100" step="0.1" value="1.0">
         </div>
         <div class="control-group">
             <label>Medium Trees</label>
-            <input type="range" id="scale-medium" min="0.5" max="2.0" step="0.1" value="1.0">
-            <div class="value-display">Scale: <span id="value-medium">1.0</span></div>
+            <input type="number" id="scale-medium" min="0.1" max="100" step="0.1" value="1.0">
         </div>
         <div class="control-group">
             <label>Small Trees</label>
-            <input type="range" id="scale-small" min="0.5" max="2.0" step="0.1" value="1.0">
-            <div class="value-display">Scale: <span id="value-small">1.0</span></div>
+            <input type="number" id="scale-small" min="0.1" max="100" step="0.1" value="1.0">
         </div>
     </div>
 
@@ -142,14 +140,18 @@
 
         // Set up scale controls
         ['extra-large', 'large', 'medium', 'small'].forEach(type => {
-            const slider = document.getElementById(`scale-${type}`);
-            const display = document.getElementById(`value-${type}`);
+            const input = document.getElementById(`scale-${type}`);
             
-            slider.addEventListener('input', (e) => {
-                scales[type] = parseFloat(e.target.value);
-                display.textContent = e.target.value;
-                updateTreeLayer();
-            });
+            const handleUpdate = (e) => {
+                const value = parseFloat(e.target.value);
+                if (value >= 0.1 && value <= 100) {
+                    scales[type] = value;
+                    updateTreeLayer();
+                }
+            };
+            
+            input.addEventListener('input', handleUpdate);
+            input.addEventListener('change', handleUpdate);
         });
 
         // Helper function to create model URL expression
