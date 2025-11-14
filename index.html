@@ -204,10 +204,19 @@
             fetch('./lambertville-trees-v1.geojson')
                 .then(response => response.json())
                 .then(data => {
+                    // Filter out features without a valid type and add index
+                    data.features = data.features.filter(feature => {
+                        return feature.properties && 
+                               feature.properties.type && 
+                               ['extra-large', 'large', 'medium', 'small'].includes(feature.properties.type);
+                    });
+                    
                     // Add a numeric index to each feature for consistent randomization
                     data.features.forEach((feature, index) => {
                         feature.properties.index = index;
                     });
+                    
+                    console.log(`Loaded ${data.features.length} valid trees`);
                     
                     // Add the trees GeoJSON source
                     map.addSource('trees', {
