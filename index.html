@@ -158,6 +158,7 @@
             return [
                 'concat',
                 MODEL_BASE_URL,
+                '/',  // Add slash to ensure proper URL
                 ['get', 'type'],  // 'extra-large', 'large', 'medium', or 'small'
                 '-tree-',
                 [
