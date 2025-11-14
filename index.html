@@ -113,7 +113,7 @@
     <script>
         // IMPORTANT: Replace this with your GitHub Pages URL
         // Format: https://YOUR_USERNAME.github.io/YOUR_REPO/models/
-        const MODEL_BASE_URL = 'https://LukeHDeck.github.io/day-4-mydata/models/';
+        const MODEL_BASE_URL = 'https://LukeHDeck.github.io/day-4-mydata/models';
         
         // Access token
         mapboxgl.accessToken = 'pk.eyJ1IjoiZGVja2RvZyIsImEiOiJjbDl5YWJydXcwMnl6M3Jrbml2djd5ZTJtIn0.hFpqesRFKogZg_ku3KKS_A';
@@ -197,6 +197,8 @@
 
         // Handle map style loading
         map.on('style.load', () => {
+            console.log('Map style loaded');
+            
             // Set the light preset
             map.setConfigProperty('basemap', 'lightPreset', 'day');
             
@@ -217,12 +219,18 @@
                     });
                     
                     console.log(`Loaded ${data.features.length} valid trees`);
+                    console.log('Sample tree:', data.features[0]);
+                    console.log('First tree model URL:', 
+                        `${MODEL_BASE_URL}${data.features[0].properties.type}-tree-${Math.floor(Math.random() * 4) + 1}.glb`
+                    );
                     
                     // Add the trees GeoJSON source
                     map.addSource('trees', {
                         'type': 'geojson',
                         'data': data
                     });
+                    
+                    console.log('Trees source added');
                     
                     // Add the tree layer with the model data
                     map.addLayer({
@@ -262,11 +270,20 @@
                         'minzoom': 14,
                         'maxzoom': 22
                     });
+                    
+                    console.log('Tree layer added');
+                    console.log('Current zoom:', map.getZoom());
+                    console.log('Check network tab for GLB file requests');
                 })
                 .catch(error => {
                     console.error('Error loading GeoJSON:', error);
                     alert('Failed to load tree data. Make sure lambertville-trees-v1.geojson is in the same directory as this HTML file.');
                 });
+        });
+        
+        // Log any errors
+        map.on('error', (e) => {
+            console.error('Map error:', e);
         });
 
         // Add navigation controls
