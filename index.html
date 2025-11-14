@@ -154,8 +154,7 @@
 
         // Helper function to create model URL expression
         function createModelExpression() {
-            // For each tree type, we'll use the random seed to pick a number 1-4
-            // and concatenate it into the model filename
+            // For each tree type, use the feature index to pick a number 1-4
             return [
                 'concat',
                 MODEL_BASE_URL,
@@ -166,7 +165,7 @@
                     [
                         '+',
                         1,
-                        ['floor', ['random', 0, 4, ['id']]]  // Generates 1, 2, 3, or 4
+                        ['floor', ['random', 0, 4, ['get', 'index']]]  // Use index as seed
                     ]
                 ],
                 '.glb'
@@ -205,6 +204,11 @@
             fetch('./lambertville-trees-v1.geojson')
                 .then(response => response.json())
                 .then(data => {
+                    // Add a numeric index to each feature for consistent randomization
+                    data.features.forEach((feature, index) => {
+                        feature.properties.index = index;
+                    });
+                    
                     // Add the trees GeoJSON source
                     map.addSource('trees', {
                         'type': 'geojson',
