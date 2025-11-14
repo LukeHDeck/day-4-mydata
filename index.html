@@ -173,28 +173,7 @@
         emissiveInput.addEventListener('input', handleEmissiveUpdate);
         emissiveInput.addEventListener('change', handleEmissiveUpdate);
 
-        // Helper function to create model URL expression
-        function createModelExpression() {
-            // For each tree type, use the feature index to pick a number 1-4
-            return [
-                'concat',
-                MODEL_BASE_URL,
-                '/',  // Add slash to ensure proper URL
-                ['get', 'type'],  // 'extra-large', 'large', 'medium', or 'small'
-                '-tree-',
-                [
-                    'to-string',
-                    [
-                        '+',
-                        1,
-                        ['floor', ['random', 0, 4, ['get', 'index']]]  // Use index as seed
-                    ]
-                ],
-                '.glb'
-            ];
-        }
-
-        // Helper function to create scale expression
+        // Helper function to create scale expression (unchanged)
         function createScaleExpression() {
             const extraLarge = scales['extra-large'];
             const large = scales['large'];
@@ -204,13 +183,13 @@
             return [
                 'case',
                 ['==', ['get', 'type'], 'extra-large'], ['literal', [extraLarge, extraLarge, extraLarge]],
-                ['==', ['get', 'type'], 'large'], ['literal', [large, large, large]],
-                ['==', ['get', 'type'], 'medium'], ['literal', [medium, medium, medium]],
-                ['literal', [small, small, small]] // default to small
+                ['==', ['get', 'type'], 'large'],       ['literal', [large, large, large]],
+                ['==', ['get', 'type'], 'medium'],      ['literal', [medium, medium, medium]],
+                                                      ['literal', [small, small, small]] // default to small
             ];
         }
 
-        // Update tree layer with new scales and emissive strength
+        // Update tree (cube) layer with new scales and emissive strength
         function updateTreeLayer() {
             if (map.getLayer('tree-layer')) {
                 map.setPaintProperty('tree-layer', 'model-scale', createScaleExpression());
@@ -243,10 +222,7 @@
                     
                     console.log(`Loaded ${data.features.length} valid trees`);
                     console.log('Sample tree:', data.features[0]);
-                    console.log('First tree model URL:', 
-                        `${MODEL_BASE_URL}${data.features[0].properties.type}-tree-${Math.floor(Math.random() * 4) + 1}.glb`
-                    );
-                    
+
                     // Add the trees GeoJSON source
                     map.addSource('trees', {
                         'type': 'geojson',
@@ -255,17 +231,18 @@
                     
                     console.log('Trees source added');
                     
-                    // Add the tree layer with the model data
+                    // Add the model layer – now always using test-cube.glb
                     map.addLayer({
                         'id': 'tree-layer',
                         'type': 'model',
                         'slot': 'middle',
                         'source': 'trees',
                         'layout': {
-                            'model-id': createModelExpression()
+                            // Every feature uses the same cube model
+                            'model-id': `${MODEL_BASE_URL}/test-cube.glb`
                         },
                         'paint': {
-                            // Slight color variation for visual interest
+                            // Slight color variation for visual interest (optional)
                             'model-color': [
                                 'hsla',
                                 ['random', 80, 120, ['get', 'index']],
@@ -274,7 +251,6 @@
                                 1
                             ],
                             'model-color-mix-intensity': 0.15,
-                            // Fade in trees as you zoom in
                             'model-opacity': [
                                 'interpolate',
                                 ['linear'],
@@ -282,11 +258,8 @@
                                 14, 0,
                                 15, 1
                             ],
-                            // Random rotation for natural appearance
-                            //'model-rotation': [
-                                //0, 0, ['random', 0, 360, ['get', 'index']]
-                            //],
-                            // Scale based on tree type and user controls
+                            // Keep rotation off for drift testing
+                            // 'model-rotation': [0, 0, 0],
                             'model-scale': createScaleExpression(),
                             'model-cast-shadows': true,
                             'model-emissive-strength': emissiveStrength
@@ -295,9 +268,7 @@
                         'maxzoom': 22
                     });
                     
-                    console.log('Tree layer added');
-                    console.log('Current zoom:', map.getZoom());
-                    console.log('Check network tab for GLB file requests');
+                    console.log('Tree (cube) layer added');
                 })
                 .catch(error => {
                     console.error('Error loading GeoJSON:', error);
