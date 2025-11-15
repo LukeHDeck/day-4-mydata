@@ -119,9 +119,9 @@
   <script src="https://api.mapbox.com/mapbox-gl-js/v3.10.0/mapbox-gl.js"></script>
 
   <script>
-    // IMPORTANT: Replace this with your GitHub Pages URL
-    // Format: https://YOUR_USERNAME.github.io/YOUR_REPO/models/
-    const MODEL_BASE_URL = 'https://LukeHDeck.github.io/day-4-mydata/models';
+    // Static URLs
+    const MODEL_BASE_URL = 'https://lukehdeck.github.io/day-4-mydata/models';
+    const GEOJSON_URL    = 'https://lukehdeck.github.io/day-4-mydata/lambertville-trees-v1.geojson';
 
     // Access token
     mapboxgl.accessToken = 'pk.eyJ1IjoiZGVja2RvZyIsImEiOiJjbDl5YWJydXcwMnl6M3Jrbml2djd5ZTJtIn0.hFpqesRFKogZg_ku3KKS_A';
@@ -248,9 +248,20 @@
       map.setConfigProperty('basemap', 'lightPreset', 'day');
 
       // Fetch and add the GeoJSON source
-      fetch('https://lukehdeck.github.io/day-4-mydata/lambertville-trees-v1.geojson')
-        .then(response => response.json())
+      console.log('Fetching GeoJSON from:', GEOJSON_URL);
+      fetch(GEOJSON_URL)
+        .then(response => {
+          console.log('GeoJSON response status:', response.status, response.statusText);
+          if (!response.ok) {
+            throw new Error(`HTTP ${response.status} while fetching ${GEOJSON_URL}`);
+          }
+          return response.json();
+        })
         .then(data => {
+          if (!data || !data.features) {
+            throw new Error('Parsed JSON does not have a "features" array');
+          }
+
           // Filter out features without a valid type and add index
           data.features = data.features.filter(feature => {
             return feature.properties &&
@@ -265,7 +276,11 @@
 
           console.log(`Loaded ${data.features.length} valid trees`);
           console.log('Sample tree:', data.features[0]);
-          console.log(`First tree model URL: ${MODEL_BASE_URL}/${data.features[0].properties.type}-tree-${Math.floor(Math.random() * 4) + 1}.glb`);
+          if (data.features[0]) {
+            console.log(
+              `First tree model URL: ${MODEL_BASE_URL}/${data.features[0].properties.type}-tree-${Math.floor(Math.random() * 4) + 1}.glb`
+            );
+          }
 
           // Add the trees GeoJSON source
           map.addSource('trees', {
@@ -321,11 +336,15 @@
         })
         .catch(error => {
           console.error('Error loading GeoJSON:', error);
-          alert('Failed to load tree data. Make sure lambertville-trees-v1.geojson is in the same directory as this HTML file.');
+          alert(
+            'Failed to load tree data.\n\n' +
+            'Error: ' + error.message + '\n\n' +
+            'URL: ' + GEOJSON_URL
+          );
         });
     });
 
-    // Log any errors
+    // Log any errors from the map itself
     map.on('error', (e) => {
       console.error('Map error:', e);
     });
