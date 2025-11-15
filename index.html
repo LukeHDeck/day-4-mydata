@@ -114,7 +114,10 @@
     <script>
         // IMPORTANT: Replace this with your GitHub Pages URL
         // Format: https://YOUR_USERNAME.github.io/YOUR_REPO/models/
-        const MODEL_BASE_URL = 'https://LukeHDeck.github.io/day-4-mydata/models';
+        const MODEL_BASE_URL = 'https://LukeHDeck.github.io/day-4-mydata/models/';
+        const TREE_SOURCE_ID = 'trees';
+        const TREE_LAYER_ID = 'tree-layer';
+        const TERRAIN_SOURCE_ID = 'terrain-dem';
 
         // Access token
         mapboxgl.accessToken = 'pk.eyJ1IjoiZGVja2RvZyIsImEiOiJjbDl5YWJydXcwMnl6M3Jrbml2djd5ZTJtIn0.hFpqesRFKogZg_ku3KKS_A';
@@ -141,6 +144,7 @@
             pitch: 60,
             bearing: 0,
             style: 'mapbox://styles/mapbox/standard',
+            projection: 'globe',
             minZoom: 14,
             maxZoom: 22,
             hash: true,
@@ -166,107 +170,99 @@
             updateTreeLayer();
         });
 
-        // Helper function to create model URL expression
-        function createModelExpression() {
-            // For each tree type, use the feature index to pick a number 1-4
-            return [
-                'concat',
-                MODEL_BASE_URL,
-                '/', // Add slash to ensure proper URL
-                ['get', 'type'], // 'extra-large', 'large', 'medium', or 'small'
-                '-tree-',
-                [
-                    'to-string',
-                    [
-                        '+',
-                        1,
-                        ['floor', ['random', 0, 4, ['get', 'index']]] // Use index as seed
-                    ]
-                ],
-                '.glb'
-            ];
-        }
-
-        // Helper function to create scale expression
-        function createScaleExpression() {
-            const extraLarge = scales['extra-large'];
-            const large = scales['large'];
-            const medium = scales['medium'];
-            const small = scales['small'];
-
-            return [
-                'case',
-                ['==', ['get', 'type'], 'extra-large'], ['literal', [extraLarge, extraLarge, extraLarge]],
-                ['==', ['get', 'type'], 'large'], ['literal', [large, large, large]],
-                ['==', ['get', 'type'], 'medium'], ['literal', [medium, medium, medium]],
-                ['literal', [small, small, small]] // default to small
-            ];
+        function getRotationExpression() {
+            return enableRotation ? ['get', 'rotationVector'] : ['literal', [0, 0, 0]];
         }
 
         // Update tree layer with new rotation and emissive strength
         function updateTreeLayer() {
-            if (map.getLayer('tree-layer')) {
-                map.setPaintProperty('tree-layer', 'model-emissive-strength', emissiveStrength);
-                map.setPaintProperty('tree-layer', 'model-rotation', createRotationExpression());
+            if (map.getLayer(TREE_LAYER_ID)) {
+                map.setPaintProperty(TREE_LAYER_ID, 'model-emissive-strength', emissiveStrength);
+                map.setPaintProperty(TREE_LAYER_ID, 'model-rotation', getRotationExpression());
             }
         }
 
-        // Helper function to create rotation expression
-        function createRotationExpression() {
-            if (enableRotation) {
-                return [0, 0, ['random', 0, 360, ['get', 'index']]];
-            } else {
-                return [0, 0, 0];
+        async function loadTreeData() {
+            const allowedTypes = Object.keys(scales);
+            const response = await fetch('./lambertville-trees-v1.geojson');
+            if (!response.ok) {
+                throw new Error(`GeoJSON request failed: ${response.status}`);
             }
+
+            const data = await response.json();
+            data.features = data.features
+                .filter(feature => {
+                    const treeType = feature.properties?.type;
+                    return treeType && allowedTypes.includes(treeType);
+                })
+                .map((feature, index) => {
+                    const type = feature.properties.type;
+                    const variant = (index % 4) + 1; // deterministic variety
+                    const rotation = Math.random() * 360;
+                    const scale = scales[type];
+
+                    return {
+                        ...feature,
+                        properties: {
+                            ...feature.properties,
+                            index,
+                            modelPath: `${MODEL_BASE_URL}${type}-tree-${variant}.glb`,
+                            rotationVector: [0, 0, rotation],
+                            scaleVector: [scale, scale, scale]
+                        }
+                    };
+                });
+
+            console.log(`Loaded ${data.features.length} trees`);
+            return data;
+        }
+
+        function ensureTerrain() {
+            if (!map.getSource(TERRAIN_SOURCE_ID)) {
+                map.addSource(TERRAIN_SOURCE_ID, {
+                    type: 'raster-dem',
+                    url: 'mapbox://mapbox.mapbox-terrain-dem-v1',
+                    tileSize: 512,
+                    maxzoom: 14
+                });
+            }
+
+            map.setTerrain({
+                source: TERRAIN_SOURCE_ID,
+                exaggeration: 1.0
+            });
+
+            map.setFog({});
         }
 
         // Handle map style loading
-        map.on('style.load', () => {
+        map.on('style.load', async () => {
             console.log('Map style loaded');
-
-            // Set the light preset
             map.setConfigProperty('basemap', 'lightPreset', 'day');
+            ensureTerrain();
 
-            // Fetch and add the GeoJSON source
-            fetch('./lambertville-trees-v1.geojson')
-                .then(response => response.json())
-                .then(data => {
-                    // Filter out features without a valid type and add index
-                    data.features = data.features.filter(feature => {
-                        return feature.properties && feature.properties.type &&
-                            ['extra-large', 'large', 'medium', 'small'].includes(feature.properties.type);
+            try {
+                const treeData = await loadTreeData();
+
+                if (!map.getSource(TREE_SOURCE_ID)) {
+                    map.addSource(TREE_SOURCE_ID, {
+                        type: 'geojson',
+                        data: treeData
                     });
+                } else {
+                    map.getSource(TREE_SOURCE_ID).setData(treeData);
+                }
 
-                    // Add a numeric index to each feature for consistent randomization
-                    data.features.forEach((feature, index) => {
-                        feature.properties.index = index;
-                    });
-
-                    console.log(`Loaded ${data.features.length} valid trees`);
-                    console.log('Sample tree:', data.features[0]);
-                    console.log('First tree model URL:', 
-                        `${MODEL_BASE_URL}/${data.features[0].properties.type}-tree-${Math.floor(Math.random() * 4) + 1}.glb`
-                    );
-
-                    // Add the trees GeoJSON source
-                    map.addSource('trees', {
-                        'type': 'geojson',
-                        'data': data
-                    });
-
-                    console.log('Trees source added');
-
-                    // Add the tree layer with the model data
+                if (!map.getLayer(TREE_LAYER_ID)) {
                     map.addLayer({
-                        'id': 'tree-layer',
-                        'type': 'model',
-                        'slot': 'middle',
-                        'source': 'trees',
-                        'layout': {
-                            'model-id': createModelExpression()
+                        id: TREE_LAYER_ID,
+                        type: 'model',
+                        slot: 'top',
+                        source: TREE_SOURCE_ID,
+                        layout: {
+                            'model-id': ['get', 'modelPath']
                         },
-                        'paint': {
-                            // Fade in trees as you zoom in
+                        paint: {
                             'model-opacity': [
                                 'interpolate',
                                 ['linear'],
@@ -274,29 +270,23 @@
                                 14, 0,
                                 15, 1
                             ],
-                            // Random rotation for natural appearance (controlled by toggle)
-                            'model-rotation': createRotationExpression(),
-                            // Scale based on tree type and user controls
-                            'model-scale': createScaleExpression(),
-                            // Anchor models at their base
-                            'model-type': 'common-3d',
-                            // Models are authored to sit on the ground plane
+                            'model-rotation': getRotationExpression(),
+                            'model-scale': ['get', 'scaleVector'],
+                            'model-type': 'terrain',
                             'model-height-offset': 0,
                             'model-cast-shadows': true,
                             'model-emissive-strength': emissiveStrength
                         },
-                        'minzoom': 14,
-                        'maxzoom': 22
+                        minzoom: 14,
+                        maxzoom: 22
                     });
+                }
 
-                    console.log('Tree layer added');
-                    console.log('Current zoom:', map.getZoom());
-                    console.log('Check network tab for GLB file requests');
-                })
-                .catch(error => {
-                    console.error('Error loading GeoJSON:', error);
-                    alert('Failed to load tree data. Make sure lambertville-trees-v1.geojson is in the same directory as this HTML file.');
-                });
+                console.log('Tree layer added');
+            } catch (error) {
+                console.error('Error loading GeoJSON:', error);
+                alert('Failed to load tree data. Make sure lambertville-trees-v1.geojson is in the same directory as this HTML file.');
+            }
         });
 
         // Log any errors
