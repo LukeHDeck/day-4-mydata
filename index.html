@@ -223,12 +223,8 @@
 
     // Helper function to create rotation expression using pre-calculated values
     function createRotationExpression() {
-      return [
-        'array',
-        0, // X-axis rotation
-        0, // Y-axis rotation
-        ['get', 'rotation'] // Z-axis rotation from pre-calculated value
-      ];
+      // Return the pre-calculated rotation array [x, y, z] from feature properties
+      return ['get', 'rotation'];
     }
 
     // Update tree layer with new scales, emissive strength, and rotation
@@ -272,8 +268,8 @@
           // Add a numeric index and random rotation to each feature for consistent randomization
           data.features.forEach((feature, index) => {
             feature.properties.index = index;
-            // Pre-calculate random rotation (0-360 degrees on Z-axis)
-            feature.properties.rotation = Math.floor(Math.random() * 360);
+            // Pre-calculate random rotation as full array [x, y, z] for model-rotation property
+            feature.properties.rotation = [0, 0, Math.floor(Math.random() * 360)];
           });
 
           console.log(`Loaded ${data.features.length} valid trees`);
