@@ -248,7 +248,7 @@
       map.setConfigProperty('basemap', 'lightPreset', 'day');
 
       // Fetch and add the GeoJSON source
-      fetch('./lambertville-trees-v1.geojson')
+      fetch('https://lukehdeck.github.io/day-4-mydata/lambertville-trees-v1.geojson')
         .then(response => response.json())
         .then(data => {
           // Filter out features without a valid type and add index
