@@ -95,43 +95,18 @@
 <body>
     <div id="map"></div>
     <div id="controls">
-        <h3>Tree Scale Controls</h3>
-        
+        <h3>Model Controls</h3>
+
         <div class="control-group">
-            <label>Extra Large Trees</label>
-            <input type="number" id="scale-extra-large" min="0.1" max="100" step="0.1" value="20">
-        </div>
-        
-        <div class="control-group">
-            <label>Large Trees</label>
-            <input type="number" id="scale-large" min="0.1" max="100" step="0.1" value="20">
-        </div>
-        
-        <div class="control-group">
-            <label>Medium Trees</label>
-            <input type="number" id="scale-medium" min="0.1" max="100" step="0.1" value="20">
-        </div>
-        
-        <div class="control-group">
-            <label>Small Trees</label>
-            <input type="number" id="scale-small" min="0.1" max="100" step="0.1" value="20">
-        </div>
-        
-        <div class="control-group" style="margin-top: 20px; padding-top: 20px; border-top: 2px solid #ddd;">
             <label>Model Brightness</label>
             <input type="number" id="emissive-strength" min="0" max="1" step="0.05" value="0">
         </div>
-        
+
         <div class="control-group">
             <label>
                 <input type="checkbox" id="enable-rotation" checked>
                 Enable Random Rotation
             </label>
-        </div>
-        
-        <div class="control-group">
-            <label>Height Offset (m)</label>
-            <input type="number" id="height-offset" min="-50" max="50" step="0.5" value="0">
         </div>
     </div>
 
@@ -144,12 +119,12 @@
         // Access token
         mapboxgl.accessToken = 'pk.eyJ1IjoiZGVja2RvZyIsImEiOiJjbDl5YWJydXcwMnl6M3Jrbml2djd5ZTJtIn0.hFpqesRFKogZg_ku3KKS_A';
 
-        // Scale values for each tree type
-        let scales = {
-            'extra-large': 20,
-            'large': 20,
-            'medium': 20,
-            'small': 20
+        // Real-world scale (height in meters) for each tree type
+        const scales = {
+            'extra-large': 18,
+            'large': 12,
+            'medium': 9,
+            'small': 6
         };
 
         // Emissive strength (brightness)
@@ -158,9 +133,6 @@
         // Rotation toggle
         let enableRotation = true;
 
-        // Height offset
-        let heightOffset = 0;
-
         // Initialize map
         const map = new mapboxgl.Map({
             container: 'map',
@@ -168,25 +140,11 @@
             zoom: 16,
             pitch: 60,
             bearing: 0,
-            style: 'mapbox://styles/deckdog/cmhpg30ke001u01rx9dda1l8i',
+            style: 'mapbox://styles/mapbox/standard',
             minZoom: 14,
             maxZoom: 22,
             hash: true,
             antialias: true
-        });
-
-        // Set up scale controls
-        ['extra-large', 'large', 'medium', 'small'].forEach(type => {
-            const input = document.getElementById(`scale-${type}`);
-            const handleUpdate = (e) => {
-                const value = parseFloat(e.target.value);
-                if (value >= 0.1 && value <= 100) {
-                    scales[type] = value;
-                    updateTreeLayer();
-                }
-            };
-            input.addEventListener('input', handleUpdate);
-            input.addEventListener('change', handleUpdate);
         });
 
         // Set up emissive strength control
@@ -207,18 +165,6 @@
             enableRotation = e.target.checked;
             updateTreeLayer();
         });
-
-        // Set up height offset control
-        const heightInput = document.getElementById('height-offset');
-        const handleHeightUpdate = (e) => {
-            const value = parseFloat(e.target.value);
-            if (value >= -50 && value <= 50) {
-                heightOffset = value;
-                updateTreeLayer();
-            }
-        };
-        heightInput.addEventListener('input', handleHeightUpdate);
-        heightInput.addEventListener('change', handleHeightUpdate);
 
         // Helper function to create model URL expression
         function createModelExpression() {
@@ -257,13 +203,11 @@
             ];
         }
 
-        // Update tree layer with new scales, rotation, height, and emissive strength
+        // Update tree layer with new rotation and emissive strength
         function updateTreeLayer() {
             if (map.getLayer('tree-layer')) {
-                map.setPaintProperty('tree-layer', 'model-scale', createScaleExpression());
                 map.setPaintProperty('tree-layer', 'model-emissive-strength', emissiveStrength);
                 map.setPaintProperty('tree-layer', 'model-rotation', createRotationExpression());
-                map.setPaintProperty('tree-layer', 'model-height-offset', heightOffset);
             }
         }
 
@@ -322,15 +266,6 @@
                             'model-id': createModelExpression()
                         },
                         'paint': {
-                            // Slight color variation for visual interest
-                            'model-color': [
-                                'hsla',
-                                ['random', 80, 120, ['get', 'index']],
-                                50,
-                                ['random', 40, 60, ['get', 'index']],
-                                1
-                            ],
-                            'model-color-mix-intensity': 0.15,
                             // Fade in trees as you zoom in
                             'model-opacity': [
                                 'interpolate',
@@ -345,8 +280,8 @@
                             'model-scale': createScaleExpression(),
                             // Anchor models at their base
                             'model-type': 'common-3d',
-                            // Height offset to adjust vertical position
-                            'model-height-offset': heightOffset,
+                            // Models are authored to sit on the ground plane
+                            'model-height-offset': 0,
                             'model-cast-shadows': true,
                             'model-emissive-strength': emissiveStrength
                         },
