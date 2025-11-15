@@ -221,18 +221,11 @@
       ];
     }
 
-    // Helper function to create rotation expression using pre-calculated values
-    function createRotationExpression() {
-      // Return the pre-calculated rotation array [x, y, z] from feature properties
-      return ['get', 'rotation'];
-    }
-
-    // Update tree layer with new scales, emissive strength, and rotation
+    // Update tree layer with new scales and emissive strength
     function updateTreeLayer() {
       if (map.getLayer('tree-layer')) {
         map.setPaintProperty('tree-layer', 'model-scale', createScaleExpression());
         map.setPaintProperty('tree-layer', 'model-emissive-strength', emissiveStrength);
-        map.setPaintProperty('tree-layer', 'model-rotation', createRotationExpression());
       }
     }
 
@@ -265,11 +258,9 @@
               ['extra-large', 'large', 'medium', 'small'].includes(feature.properties.type);
           });
 
-          // Add a numeric index and random rotation to each feature for consistent randomization
+          // Add a numeric index to each feature for consistent randomization
           data.features.forEach((feature, index) => {
             feature.properties.index = index;
-            // Pre-calculate random rotation as full array [x, y, z] for model-rotation property
-            feature.properties.rotation = [0, 0, Math.floor(Math.random() * 360)];
           });
 
           console.log(`Loaded ${data.features.length} valid trees`);
@@ -316,8 +307,8 @@
                 15, 1
               ],
 
-              // Rotation using pre-calculated values
-              'model-rotation': createRotationExpression(),
+              // Static rotation (model-rotation doesn't support expressions)
+              'model-rotation': [0, 0, 0],
 
               // Scale based on tree type and user controls
               'model-scale': createScaleExpression(),
