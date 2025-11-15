@@ -221,22 +221,11 @@
       ];
     }
 
-    // Always-on random rotation expression (per feature)
-    function createRotationExpression() {
-      return [
-        'array', 'number',
-        0, // X-axis rotation
-        0, // Y-axis rotation
-        ['random', 0, 360, ['get', 'index']] // random Z rotation
-      ];
-    }
-
-    // Update tree layer with new scales, emissive strength, and rotation
+    // Update tree layer with new scales and emissive strength
     function updateTreeLayer() {
       if (map.getLayer('tree-layer')) {
         map.setPaintProperty('tree-layer', 'model-scale', createScaleExpression());
         map.setPaintProperty('tree-layer', 'model-emissive-strength', emissiveStrength);
-        map.setPaintProperty('tree-layer', 'model-rotation', createRotationExpression());
       }
     }
 
@@ -269,9 +258,11 @@
               ['extra-large', 'large', 'medium', 'small'].includes(feature.properties.type);
           });
 
-          // Add a numeric index to each feature for consistent randomization
+          // Add a numeric index and random rotation to each feature for consistent randomization
           data.features.forEach((feature, index) => {
             feature.properties.index = index;
+            // Pre-calculate random rotation (0-360 degrees on Z-axis)
+            feature.properties.rotation = Math.floor(Math.random() * 360);
           });
 
           console.log(`Loaded ${data.features.length} valid trees`);
@@ -317,9 +308,6 @@
                 14, 0,
                 15, 1
               ],
-
-              // Always-on random rotation
-              'model-rotation': createRotationExpression(),
 
               // Scale based on tree type and user controls
               'model-scale': createScaleExpression(),
