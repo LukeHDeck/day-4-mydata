@@ -120,8 +120,8 @@
 
   <script>
     // Static URLs
-    const MODEL_BASE_URL = 'https://LukeHDeck.github.io/day-4-mydata/models';
-    const GEOJSON_URL    = 'https://LukeHDeck.github.io/day-4-mydata/lambertville-trees-v1.geojson';
+    const MODEL_BASE_URL = 'https://lukehdeck.github.io/day-4-mydata/models';
+    const GEOJSON_URL    = 'https://lukehdeck.github.io/day-4-mydata/lambertville-trees-v1.geojson';
 
     // Access token
     mapboxgl.accessToken = 'pk.eyJ1IjoiZGVja2RvZyIsImEiOiJjbDl5YWJydXcwMnl6M3Jrbml2djd5ZTJtIn0.hFpqesRFKogZg_ku3KKS_A';
@@ -221,11 +221,22 @@
       ];
     }
 
-    // Update tree layer with new scales and emissive strength
+    // Always-on random rotation expression (per feature)
+    function createRotationExpression() {
+      return [
+        'array', 'number',
+        0, // X-axis rotation
+        0, // Y-axis rotation
+        ['random', 0, 360, ['get', 'index']] // random Z rotation
+      ];
+    }
+
+    // Update tree layer with new scales, emissive strength, and rotation
     function updateTreeLayer() {
       if (map.getLayer('tree-layer')) {
         map.setPaintProperty('tree-layer', 'model-scale', createScaleExpression());
         map.setPaintProperty('tree-layer', 'model-emissive-strength', emissiveStrength);
+        map.setPaintProperty('tree-layer', 'model-rotation', createRotationExpression());
       }
     }
 
@@ -307,12 +318,8 @@
                 15, 1
               ],
 
-              // Random rotation on Z-axis (literal array with expression for third element)
-              'model-rotation': [
-                0,
-                0,
-                ['random', 0, 360, ['get', 'index']]
-              ],
+              // Always-on random rotation
+              'model-rotation': createRotationExpression(),
 
               // Scale based on tree type and user controls
               'model-scale': createScaleExpression(),
