@@ -1,310 +1,232 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Lambertville Trees</title>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <link href="https://api.mapbox.com/mapbox-gl-js/v3.10.0/mapbox-gl.css" rel="stylesheet">
-    <style>
-        body {
-            margin: 0;
-            padding: 0;
-            font-family: 'Helvetica Neue', Arial, sans-serif;
-        }
-        
-        html, body, #map {
-            height: 100%;
-        }
-        
-        #controls {
-            position: absolute;
-            right: 15px;
-            top: 15px;
-            background: rgba(255, 255, 255, 0.95);
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-            z-index: 1;
-            max-width: 280px;
-        }
-        
-        #controls h3 {
-            margin-top: 0;
-            margin-bottom: 15px;
-            color: #2c3e50;
-            font-size: 18px;
-        }
-        
-        .control-group {
-            margin-bottom: 15px;
-            padding-bottom: 15px;
-            border-bottom: 1px solid #e0e0e0;
-        }
-        
-        .control-group:last-child {
-            border-bottom: none;
-            margin-bottom: 0;
-            padding-bottom: 0;
-        }
-        
-        .control-group label {
-            display: block;
-            font-weight: 600;
-            color: #34495e;
-            margin-bottom: 8px;
-            font-size: 13px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-        
-        .control-group label:has(input[type="checkbox"]) {
-            text-transform: none;
-            font-weight: normal;
-            font-size: 14px;
-            cursor: pointer;
-        }
-        
-        .control-group input[type="number"] {
-            width: 100%;
-            padding: 8px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 14px;
-            box-sizing: border-box;
-        }
-        
-        .control-group input[type="number"]:focus {
-            outline: none;
-            border-color: #3498db;
-        }
-        
-        .control-group input[type="checkbox"] {
-            margin-right: 8px;
-            cursor: pointer;
-        }
-        
-        @media only screen and (max-width: 640px) {
-            #controls {
-                max-width: calc(100% - 30px);
-                max-height: 50vh;
-                overflow-y: auto;
-            }
-        }
-    </style>
+  <title>Lambertville Trees</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <link href="https://api.mapbox.com/mapbox-gl-js/v3.10.0/mapbox-gl.css" rel="stylesheet">
+  
+  <style>
+    body { margin:0; padding:0; font-family:'Helvetica Neue',Arial,sans-serif; }
+    html, body, #map { height:100%; }
+
+    #controls {
+      position:absolute; right:15px; top:15px;
+      background:rgba(255,255,255,0.95);
+      padding:20px; border-radius:8px;
+      box-shadow:0 2px 10px rgba(0,0,0,0.2);
+      z-index:1; max-width:280px;
+    }
+
+    #controls h3 { margin-top:0; margin-bottom:15px; color:#2c3e50; font-size:18px; }
+
+    .control-group {
+      margin-bottom:15px;
+      padding-bottom:15px;
+      border-bottom:1px solid #e0e0e0;
+    }
+
+    .control-group:last-child {
+      border-bottom:none; margin-bottom:0; padding-bottom:0;
+    }
+
+    .control-group label {
+      display:block;
+      font-weight:600;
+      color:#34495e;
+      margin-bottom:8px;
+      font-size:13px;
+      text-transform:uppercase;
+      letter-spacing:0.5px;
+    }
+
+    .control-group input[type="number"] {
+      width:100%; padding:8px;
+      border:1px solid #ddd;
+      border-radius:4px;
+      font-size:14px;
+      box-sizing:border-box;
+    }
+
+    .control-group input[type="number"]:focus {
+      outline:none; border-color:#3498db;
+    }
+  </style>
 </head>
+
 <body>
-    <div id="map"></div>
-    <div id="controls">
-        <h3>Model Controls</h3>
+  <div id="map"></div>
 
-        <div class="control-group">
-            <label>Model Brightness</label>
-            <input type="number" id="emissive-strength" min="0" max="1" step="0.05" value="0">
-        </div>
+  <div id="controls">
+    <h3>Tree Scale Controls</h3>
 
-        <div class="control-group">
-            <label>
-                <input type="checkbox" id="enable-rotation" checked>
-                Enable Random Rotation
-            </label>
-        </div>
+    <div class="control-group">
+      <label>Extra Large Trees</label>
+      <input type="number" id="scale-extra-large" min="0.1" max="100" step="0.1" value="20">
     </div>
 
-    <script src="https://api.mapbox.com/mapbox-gl-js/v3.10.0/mapbox-gl.js"></script>
-    <script>
-        // IMPORTANT: Replace this with your GitHub Pages URL
-        // Format: https://YOUR_USERNAME.github.io/YOUR_REPO/models/
-        const MODEL_BASE_URL = 'https://LukeHDeck.github.io/day-4-mydata/models/';
-        const TREE_SOURCE_ID = 'trees';
-        const TREE_LAYER_ID = 'tree-layer';
-        const TERRAIN_SOURCE_ID = 'terrain-dem';
+    <div class="control-group">
+      <label>Large Trees</label>
+      <input type="number" id="scale-large" min="0.1" max="100" step="0.1" value="20">
+    </div>
 
-        // Access token
-        mapboxgl.accessToken = 'pk.eyJ1IjoiZGVja2RvZyIsImEiOiJjbDl5YWJydXcwMnl6M3Jrbml2djd5ZTJtIn0.hFpqesRFKogZg_ku3KKS_A';
+    <div class="control-group">
+      <label>Medium Trees</label>
+      <input type="number" id="scale-medium" min="0.1" max="100" step="0.1" value="20">
+    </div>
 
-        // Real-world scale (height in meters) for each tree type
-        const scales = {
-            'extra-large': 18,
-            'large': 12,
-            'medium': 9,
-            'small': 6
-        };
+    <div class="control-group">
+      <label>Small Trees</label>
+      <input type="number" id="scale-small" min="0.1" max="100" step="0.1" value="20">
+    </div>
 
-        // Emissive strength (brightness)
-        let emissiveStrength = 0;
+    <div class="control-group" style="margin-top:20px; padding-top:20px; border-top:2px solid #ddd;">
+      <label>Model Brightness</label>
+      <input type="number" id="emissive-strength" min="0" max="1" step="0.05" value="0">
+    </div>
 
-        // Rotation toggle
-        let enableRotation = true;
+  </div>
 
-        // Initialize map
-        const map = new mapboxgl.Map({
-            container: 'map',
-            center: [-74.945, 40.367], // Lambertville, NJ
-            zoom: 16,
-            pitch: 60,
-            bearing: 0,
-            style: 'mapbox://styles/mapbox/standard',
-            projection: 'globe',
-            minZoom: 14,
-            maxZoom: 22,
-            hash: true,
-            antialias: true
-        });
+  <script src="https://api.mapbox.com/mapbox-gl-js/v3.10.0/mapbox-gl.js"></script>
 
-        // Set up emissive strength control
-        const emissiveInput = document.getElementById('emissive-strength');
-        const handleEmissiveUpdate = (e) => {
-            const value = parseFloat(e.target.value);
-            if (value >= 0 && value <= 1) {
-                emissiveStrength = value;
-                updateTreeLayer();
-            }
-        };
-        emissiveInput.addEventListener('input', handleEmissiveUpdate);
-        emissiveInput.addEventListener('change', handleEmissiveUpdate);
+  <script>
+    const MODEL_BASE_URL = 'https://LukeHDeck.github.io/day-4-mydata/models';
 
-        // Set up rotation toggle
-        const rotationCheckbox = document.getElementById('enable-rotation');
-        rotationCheckbox.addEventListener('change', (e) => {
-            enableRotation = e.target.checked;
-            updateTreeLayer();
-        });
+    mapboxgl.accessToken = 'pk.eyJ1IjoiZGVja2RvZyIsImEiOiJjbDl5YWJydXcwMnl6M3Jrbml2djd5ZTJtIn0.hFpqesRFKogZg_ku3KKS_A';
 
-        function getRotationExpression() {
-            return enableRotation ? ['get', 'rotationVector'] : ['literal', [0, 0, 0]];
+    let scales = {
+      'extra-large': 20,
+      'large': 20,
+      'medium': 20,
+      'small': 20
+    };
+
+    let emissiveStrength = 0;
+
+    const map = new mapboxgl.Map({
+      container: 'map',
+      center: [-74.945, 40.367],
+      zoom: 16,
+      pitch: 60,
+      bearing: 0,
+      style: 'mapbox://styles/deckdog/cmhpg30ke001u01rx9dda1l8i',
+      minZoom: 14,
+      maxZoom: 22,
+      hash: true,
+      antialias: true
+    });
+
+    // Scale inputs
+    ['extra-large','large','medium','small'].forEach(type=>{
+      const input=document.getElementById(`scale-${type}`);
+      const handleUpdate=e=>{
+        const v=parseFloat(e.target.value);
+        if(v>=0.1 && v<=100){
+          scales[type]=v;
+          updateTreeLayer();
         }
+      };
+      input.addEventListener('input',handleUpdate);
+      input.addEventListener('change',handleUpdate);
+    });
 
-        // Update tree layer with new rotation and emissive strength
-        function updateTreeLayer() {
-            if (map.getLayer(TREE_LAYER_ID)) {
-                map.setPaintProperty(TREE_LAYER_ID, 'model-emissive-strength', emissiveStrength);
-                map.setPaintProperty(TREE_LAYER_ID, 'model-rotation', getRotationExpression());
+    // Brightness input
+    document.getElementById('emissive-strength').addEventListener('input',e=>{
+      emissiveStrength=parseFloat(e.target.value);
+      updateTreeLayer();
+    });
+
+    // Model URL creator
+    function createModelExpression(){
+      return [
+        'concat',
+        MODEL_BASE_URL, '/',
+        ['get','type'],
+        '-tree-',
+        ['to-string', ['+', 1, ['floor',['random',0,4,['get','index']]]]],
+        '.glb'
+      ];
+    }
+
+    // Scale logic
+    function createScaleExpression(){
+      return [
+        'case',
+        ['==',['get','type'],'extra-large'], ['literal',[scales['extra-large'],scales['extra-large'],scales['extra-large']]],
+        ['==',['get','type'],'large'],       ['literal',[scales['large'],scales['large'],scales['large']]],
+        ['==',['get','type'],'medium'],      ['literal',[scales['medium'],scales['medium'],scales['medium']]],
+                                              ['literal',[scales['small'],scales['small'],scales['small']]]
+      ];
+    }
+
+    // ⭐ ALWAYS-ON RANDOM ROTATION
+    function createRotationExpression(){
+      return [0, 0, ['random', 0, 360, ['get','index']]];
+    }
+
+    // Update tree layer
+    function updateTreeLayer(){
+      if(map.getLayer('tree-layer')){
+        map.setPaintProperty('tree-layer','model-scale',createScaleExpression());
+        map.setPaintProperty('tree-layer','model-emissive-strength',emissiveStrength);
+        map.setPaintProperty('tree-layer','model-rotation',createRotationExpression());
+      }
+    }
+
+    map.on('style.load',()=>{
+
+      map.setConfigProperty('basemap','lightPreset','day');
+
+      fetch('./lambertville-trees-v1.geojson')
+        .then(r=>r.json())
+        .then(data=>{
+          data.features=data.features.filter(f=>{
+            return f.properties &&
+              f.properties.type &&
+              ['extra-large','large','medium','small'].includes(f.properties.type);
+          });
+
+          data.features.forEach((f,i)=>f.properties.index=i);
+
+          map.addSource('trees',{ type:'geojson', data:data });
+
+          map.addLayer({
+            id:'tree-layer',
+            type:'model',
+            slot:'middle',
+            source:'trees',
+            layout:{ 'model-id':createModelExpression() },
+            paint:{
+              'model-color':[
+                'hsla',
+                ['random',80,120,['get','index']],
+                50,
+                ['random',40,60,['get','index']],
+                1
+              ],
+              'model-color-mix-intensity':0.15,
+
+              'model-opacity':[
+                'interpolate',['linear'],['zoom'],
+                14,0, 15,1
+              ],
+
+              // ⭐ ALWAYS-ON RANDOM ROTATION
+              'model-rotation': createRotationExpression(),
+
+              'model-scale': createScaleExpression(),
+              'model-cast-shadows': true,
+              'model-emissive-strength': emissiveStrength
             }
-        }
-
-        async function loadTreeData() {
-            const allowedTypes = Object.keys(scales);
-            const response = await fetch('./lambertville-trees-v1.geojson');
-            if (!response.ok) {
-                throw new Error(`GeoJSON request failed: ${response.status}`);
-            }
-
-            const data = await response.json();
-            data.features = data.features
-                .filter(feature => {
-                    const treeType = feature.properties?.type;
-                    return treeType && allowedTypes.includes(treeType);
-                })
-                .map((feature, index) => {
-                    const type = feature.properties.type;
-                    const variant = (index % 4) + 1; // deterministic variety
-                    const rotation = Math.random() * 360;
-                    const scale = scales[type];
-
-                    return {
-                        ...feature,
-                        properties: {
-                            ...feature.properties,
-                            index,
-                            modelPath: `${MODEL_BASE_URL}${type}-tree-${variant}.glb`,
-                            rotationVector: [0, 0, rotation],
-                            scaleVector: [scale, scale, scale]
-                        }
-                    };
-                });
-
-            console.log(`Loaded ${data.features.length} trees`);
-            return data;
-        }
-
-        function ensureTerrain() {
-            if (!map.getSource(TERRAIN_SOURCE_ID)) {
-                map.addSource(TERRAIN_SOURCE_ID, {
-                    type: 'raster-dem',
-                    url: 'mapbox://mapbox.mapbox-terrain-dem-v1',
-                    tileSize: 512,
-                    maxzoom: 14
-                });
-            }
-
-            map.setTerrain({
-                source: TERRAIN_SOURCE_ID,
-                exaggeration: 1.0
-            });
-
-            map.setFog({});
-        }
-
-        // Handle map style loading
-        map.on('style.load', async () => {
-            console.log('Map style loaded');
-            map.setConfigProperty('basemap', 'lightPreset', 'day');
-            ensureTerrain();
-
-            try {
-                const treeData = await loadTreeData();
-
-                if (!map.getSource(TREE_SOURCE_ID)) {
-                    map.addSource(TREE_SOURCE_ID, {
-                        type: 'geojson',
-                        data: treeData
-                    });
-                } else {
-                    map.getSource(TREE_SOURCE_ID).setData(treeData);
-                }
-
-                if (!map.getLayer(TREE_LAYER_ID)) {
-                    map.addLayer({
-                        id: TREE_LAYER_ID,
-                        type: 'model',
-                        slot: 'top',
-                        source: TREE_SOURCE_ID,
-                        layout: {
-                            'model-id': ['get', 'modelPath']
-                        },
-                        paint: {
-                            'model-opacity': [
-                                'interpolate',
-                                ['linear'],
-                                ['zoom'],
-                                14, 0,
-                                15, 1
-                            ],
-                            'model-rotation': getRotationExpression(),
-                            'model-scale': ['get', 'scaleVector'],
-                            'model-type': 'terrain',
-                            'model-height-offset': 0,
-                            'model-cast-shadows': true,
-                            'model-emissive-strength': emissiveStrength
-                        },
-                        minzoom: 14,
-                        maxzoom: 22
-                    });
-                }
-
-                console.log('Tree layer added');
-            } catch (error) {
-                console.error('Error loading GeoJSON:', error);
-                alert('Failed to load tree data. Make sure lambertville-trees-v1.geojson is in the same directory as this HTML file.');
-            }
+          });
         });
+    });
 
-        // Log any errors
-        map.on('error', (e) => {
-            console.error('Map error:', e);
-        });
+    map.addControl(new mapboxgl.NavigationControl(),'top-left');
 
-        // Add navigation controls
-        map.addControl(new mapboxgl.NavigationControl(), 'top-left');
+    map.on('idle',()=>map.repaint=false);
+    map.on('move',()=>map.repaint=true);
 
-        // Performance optimization
-        map.on('idle', () => {
-            map.repaint = false;
-        });
-
-        map.on('move', () => {
-            map.repaint = true;
-        });
-    </script>
+  </script>
 </body>
 </html>
