@@ -307,8 +307,12 @@
                 15, 1
               ],
 
-              // Static rotation (model-rotation doesn't support expressions)
-              'model-rotation': [0, 0, 0],
+              // Random rotation on Z-axis (literal array with expression for third element)
+              'model-rotation': [
+                0,
+                0,
+                ['random', 0, 360, ['get', 'index']]
+              ],
 
               // Scale based on tree type and user controls
               'model-scale': createScaleExpression(),
